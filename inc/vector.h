@@ -28,5 +28,9 @@ typedef struct {
 
 void Vector_ctor(Vector * const, data_type_t, uint8_t, void*);
 void Vector_dctor(Vector * const);
+void resize(Vector * const, uint8_t);
+void clear(Vector * const);
+size_t size(Vector * const);
+size_t capacity(Vector * const);
 
 #endif /* !VECTOR_H */

@@ -98,3 +98,32 @@ void Vector_dctor(Vector * const self) {
     self->curr_size = 0;
     self->type = UNKNOWN_TYPE;
 }
+
+void resize(Vector * const self, uint8_t new_size) {
+    size_t full_data_size = calc_full_data_size(&(self->type), &new_size);
+    if (full_data_size) {
+        self->data = realloc(self->data, full_data_size);
+        if (!self->data) {
+            warning_print("Failed to allocate space for the vector");
+            self->curr_size = 0;
+            self->max_size = 0;
+        }
+        else {
+            self->max_size = new_size;
+        }
+    }
+    else warning_print("Failed to allocate new space for the vector");
+    
+}
+
+void clear(Vector * const self) {
+    clear_data(self);
+}
+
+size_t size(Vector * const self) {
+    return self->curr_size;
+}
+
+size_t capacity(Vector * const self) {
+    return self->max_size;
+}
