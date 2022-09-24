@@ -110,7 +110,12 @@ int main (void) {
     vector_print(&vector);
 
     printf("Resize vector\n");
-    resize(&vector, 5);
+    resize(&vector, 16);
+    printf("New vector size: %3u, new vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Resize vector again\n");
+    resize(&vector, 8);
     printf("New vector size: %3u, new vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 

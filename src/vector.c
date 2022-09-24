@@ -16,6 +16,17 @@
         fflush(stdout);\
     }
 
+#define error_print(fmt, ...) {\
+        fprintf(\
+            stdout,\
+            "[ERROR] " fmt " in %s, Line %i\n",\
+            __VA_ARGS__,\
+            __FILE__,\
+            __LINE__\
+        );\
+        fflush(stdout);\
+    }
+
 static uint8_t calc_elem_size(data_type_t *data_type) {
     uint8_t result;
     switch (*data_type) {
@@ -39,7 +50,7 @@ static uint8_t calc_elem_size(data_type_t *data_type) {
     return result;
 }
 
-static size_t calc_full_data_size(data_type_t *data_type, size_t *data_size) {
+static size_t calc_full_data_size(data_type_t *data_type, size_t const * const data_size) {
     size_t result = calc_elem_size(data_type);
     if (result != UNKNOWN_TYPE) {
         result *= *data_size;
@@ -51,7 +62,7 @@ static size_t calc_full_data_size(data_type_t *data_type, size_t *data_size) {
 
 static void fill_data(
     Vector * const self,
-    size_t start_pos,
+    const size_t start_pos,
     void * input_data
 ) {
     uint8_t * vector_data_ = (uint8_t*)self->data;
@@ -69,13 +80,31 @@ static void fill_data(
     }
 }
 
-static void clear_data(Vector * const self) {
-    uint8_t * vector_data_ = (uint8_t*)self->data;
-    size_t full_data_size = calc_full_data_size(&(self->type), &(self->max_size));
-    for (size_t i = 0; i < full_data_size; i++) {
-        *(vector_data_ + i) = 0;
+static void reallocate(Vector * const self, size_t const * const new_size) {
+    size_t full_data_size = calc_full_data_size(&(self->type), new_size);
+    if (full_data_size) {
+        self->data = realloc(self->data, full_data_size);
+        if (!self->data) {
+            warning_print("Failed to allocate space for the vector");
+            self->curr_size = 0;
+            self->max_size = 0;
+        }
+        else {
+            self->max_size = *new_size;
+            size_t pos = calc_elem_size(&self->type) * self->curr_size;
+            fill_data(self, pos, NULL);
+            if (*new_size < self->curr_size) self->curr_size = *new_size;
+        }
     }
-    self->curr_size = 0;
+    else warning_print("Incorrect new size for the vector");
+}
+
+static data_value_t get_element(Vector * const self, const size_t pos) {
+
+}
+
+static void set_element(Vector * const self, const size_t pos, const data_value_t value) {
+
 }
 
 void Vector_ctor(Vector * const self, data_type_t data_type, size_t data_size, void * data) {
@@ -83,9 +112,10 @@ void Vector_ctor(Vector * const self, data_type_t data_type, size_t data_size, v
     size_t full_data_size = calc_full_data_size(&data_type, &data_size);
     self->data = full_data_size ? self->data = malloc(full_data_size) : NULL;
     if (!self->data) {
-        warning_print("Failed to allocate space for the vector");
         self->curr_size = 0;
         self->max_size = 0;
+        error_print("Failed to allocate space for the vector");
+        assert(0);
     }
     else {
         self->max_size = data_size;
@@ -109,33 +139,23 @@ void Vector_dctor(Vector * const self) {
     self->type = UNKNOWN_TYPE;
 }
 
-void resize(Vector * const self, size_t new_size) {
+void reserve(Vector * const self, const size_t new_size) {
+    assert(self->data);
+    reallocate(self, &new_size);
+}
+
+void resize(Vector * const self, const size_t new_size) {
     assert(self->data);
     size_t pos = self->curr_size < new_size ? self->curr_size : new_size;
     pos *= calc_elem_size(&self->type);
-    fill_data(self, pos, NULL);
-    self->curr_size = new_size;
-}
-
-void reserve(Vector * const self, size_t new_size) {
-    assert(self->data);
-    size_t full_data_size = calc_full_data_size(&(self->type), &new_size);
-    if (full_data_size) {
-        self->data = realloc(self->data, full_data_size);
-        if (!self->data) {
-            warning_print("Failed to allocate space for the vector");
-            self->curr_size = 0;
-            self->max_size = 0;
-        }
-        else {
-            self->max_size = new_size;
-            size_t pos = calc_elem_size(&self->type) * self->curr_size;
-            fill_data(self, pos, NULL);
-            if (new_size < self->curr_size) self->curr_size = new_size;
-        }
+    if (new_size > self->max_size) {
+        reallocate(self, &new_size);
+        self->curr_size = new_size;
     }
-    else warning_print("Failed to allocate new space for the vector");
-    
+    else {
+        fill_data(self, pos, NULL);
+        self->curr_size = new_size;
+    }
 }
 
 void clear(Vector * const self) {
@@ -146,23 +166,32 @@ void clear(Vector * const self) {
 
 void push_back(Vector * const self, data_value_t value) {
     assert(self->data);
+    if (self->curr_size < self->max_size) {
+        
+    }
+    else {
 
+    }
 }
 
 void push_front(Vector * const self, data_value_t value) {
     assert(self->data);
 }
 
-size_t size(Vector * const self) {
+void set_at(Vector * const self, const size_t pos, data_value_t value) {
+    assert(self->data);
+}
+
+size_t size(Vector const * const self) {
     assert(self->data);
     return self->curr_size;
 }
 
-size_t capacity(Vector * const self) {
+size_t capacity(Vector const * const self) {
     assert(self->data);
     return self->max_size;
 }
-
+ 
 data_value_t pop_back(Vector * const self) {
     assert(self->data);
     data_value_t result = {.u8 = 0};
@@ -170,6 +199,12 @@ data_value_t pop_back(Vector * const self) {
 }
 
 data_value_t pop_front(Vector * const self) {
+    assert(self->data);
+    data_value_t result = { .u8 = 0 };
+    return result;
+}
+
+data_value_t get_at(Vector const * const self, const size_t pos) {
     assert(self->data);
     data_value_t result = { .u8 = 0 };
     return result;

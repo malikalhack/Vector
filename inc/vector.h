@@ -41,14 +41,17 @@ typedef struct {
 
 void Vector_ctor(Vector * const, data_type_t, size_t, void*);
 void Vector_dctor(Vector * const);
-void resize(Vector * const, size_t);
-void reserve(Vector * const, size_t);
+void resize(Vector * const, const size_t);
+void resize(Vector * const, const size_t);
+void reserve(Vector * const, const size_t);
 void clear(Vector * const);
 void push_back(Vector * const, data_value_t);
 void push_front(Vector * const, data_value_t);
-size_t size(Vector * const);
-size_t capacity(Vector * const);
+void set_at(Vector * const, const size_t, data_value_t);
+size_t size(Vector const * const);
+size_t capacity(Vector const * const);
 data_value_t pop_back(Vector * const);
 data_value_t pop_front(Vector * const);
+data_value_t get_at(Vector const * const, const size_t);
 
 #endif /* !VECTOR_H */
