@@ -1,10 +1,17 @@
+/**
+ * @file    vector.c
+ * @version 1.0.0
+ * @authors Anton Chernov
+ * @date    24/09/2022
+ */
+
+/****************************** Included files ********************************/
 #include "vector.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <assert.h>
-
-#define UNKNOWN_TYPE (255)
+/******************************** Definition **********************************/
 #define warning_print(fmt, ...) {\
         fprintf(\
             stdout,\
@@ -15,7 +22,7 @@
         );\
         fflush(stdout);\
     }
-
+/*----------------------------------------------------------------------------*/
 #define error_print(fmt, ...) {\
         fprintf(\
             stdout,\
@@ -26,7 +33,9 @@
         );\
         fflush(stdout);\
     }
-
+/*----------------------------------------------------------------------------*/
+#define UNKNOWN_TYPE  (255)
+/****************************** Private  functions ****************************/
 static uint8_t calc_elem_size(data_type_t *data_type) {
     uint8_t result;
     switch (*data_type) {
@@ -49,8 +58,11 @@ static uint8_t calc_elem_size(data_type_t *data_type) {
     }
     return result;
 }
-
-static size_t calc_full_data_size(data_type_t *data_type, size_t const * const data_size) {
+/*----------------------------------------------------------------------------*/
+static size_t calc_full_data_size(
+    data_type_t *data_type,
+    size_t const * const data_size
+) {
     size_t result = calc_elem_size(data_type);
     if (result != UNKNOWN_TYPE) {
         result *= *data_size;
@@ -59,7 +71,7 @@ static size_t calc_full_data_size(data_type_t *data_type, size_t const * const d
 
     return result;
 }
-
+/*----------------------------------------------------------------------------*/
 static void fill_data(
     Vector * const self,
     const size_t start_pos,
@@ -79,7 +91,7 @@ static void fill_data(
         }
     }
 }
-
+/*----------------------------------------------------------------------------*/
 static void reallocate(Vector * const self, size_t const * const new_size) {
     size_t full_data_size = calc_full_data_size(&(self->type), new_size);
     if (full_data_size) {
@@ -98,16 +110,25 @@ static void reallocate(Vector * const self, size_t const * const new_size) {
     }
     else warning_print("Incorrect new size for the vector");
 }
-
+/*----------------------------------------------------------------------------*/
 static data_value_t get_element(Vector * const self, const size_t pos) {
 
 }
-
-static void set_element(Vector * const self, const size_t pos, const data_value_t value) {
+/*----------------------------------------------------------------------------*/
+static void set_element(
+    Vector * const self,
+    const size_t pos,
+    const data_value_t value
+) {
 
 }
-
-void Vector_ctor(Vector * const self, data_type_t data_type, size_t data_size, void * data) {
+/********************* Application Programming Interface **********************/
+void Vector_ctor(
+    Vector * const self,
+    data_type_t data_type,
+    size_t data_size,
+    void * data
+) {
     self->type = data_type < TYPE_LIMIT ? data_type : UNKNOWN_TYPE;
     size_t full_data_size = calc_full_data_size(&data_type, &data_size);
     self->data = full_data_size ? self->data = malloc(full_data_size) : NULL;
@@ -129,7 +150,7 @@ void Vector_ctor(Vector * const self, data_type_t data_type, size_t data_size, v
         }
     }
 }
-
+/*----------------------------------------------------------------------------*/
 void Vector_dctor(Vector * const self) {
     assert(self->data);
     free(self->data);
@@ -138,12 +159,12 @@ void Vector_dctor(Vector * const self) {
     self->curr_size = 0;
     self->type = UNKNOWN_TYPE;
 }
-
+/*----------------------------------------------------------------------------*/
 void reserve(Vector * const self, const size_t new_size) {
     assert(self->data);
     reallocate(self, &new_size);
 }
-
+/*----------------------------------------------------------------------------*/
 void resize(Vector * const self, const size_t new_size) {
     assert(self->data);
     size_t pos = self->curr_size < new_size ? self->curr_size : new_size;
@@ -157,13 +178,13 @@ void resize(Vector * const self, const size_t new_size) {
         self->curr_size = new_size;
     }
 }
-
+/*----------------------------------------------------------------------------*/
 void clear(Vector * const self) {
     assert(self->data);
     fill_data(self, 0, NULL);
     self->curr_size = 0;
 }
-
+/*----------------------------------------------------------------------------*/
 void push_back(Vector * const self, data_value_t value) {
     assert(self->data);
     if (self->curr_size < self->max_size) {
@@ -173,39 +194,64 @@ void push_back(Vector * const self, data_value_t value) {
 
     }
 }
-
-void push_front(Vector * const self, data_value_t value) {
-    assert(self->data);
-}
-
+/*----------------------------------------------------------------------------*/
 void set_at(Vector * const self, const size_t pos, data_value_t value) {
     assert(self->data);
 }
-
+/*----------------------------------------------------------------------------*/
 size_t size(Vector const * const self) {
     assert(self->data);
     return self->curr_size;
 }
-
+/*----------------------------------------------------------------------------*/
 size_t capacity(Vector const * const self) {
     assert(self->data);
     return self->max_size;
 }
- 
+/*----------------------------------------------------------------------------*/
 data_value_t pop_back(Vector * const self) {
     assert(self->data);
     data_value_t result = {.u8 = 0};
     return result;
 }
-
-data_value_t pop_front(Vector * const self) {
-    assert(self->data);
-    data_value_t result = { .u8 = 0 };
-    return result;
-}
-
+/*----------------------------------------------------------------------------*/
 data_value_t get_at(Vector const * const self, const size_t pos) {
     assert(self->data);
     data_value_t result = { .u8 = 0 };
     return result;
 }
+/*----------------------------------------------------------------------------*/
+void insert(Vector * const self, const size_t pos, data_value_t value) {
+    assert(self->data);
+}
+/*----------------------------------------------------------------------------*/
+void insert_array(
+    Vector * const self,
+    const size_t pos,
+    void * new_data,
+    const size_t data_size
+) {
+    assert(self->data);
+}
+/*----------------------------------------------------------------------------*/
+void insert_group(
+    Vector * const self,
+    const size_t start_pos,
+    const size_t finish_pos,
+    data_value_t value
+) {
+    assert(self->data);
+}
+/*----------------------------------------------------------------------------*/
+void erase(Vector * const self, const size_t pos) {
+
+}
+/*----------------------------------------------------------------------------*/
+void erase_group(
+    Vector * const self,
+    const size_t start_pos,
+    const size_t finish_pos
+) {
+    assert(self->data);
+}
+/******************************************************************************/
