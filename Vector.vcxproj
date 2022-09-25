@@ -131,6 +131,7 @@
     <ClCompile Include="src\vector.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\log.h" />
     <ClInclude Include="inc\vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

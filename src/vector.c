@@ -3,40 +3,21 @@
  * @version 1.0.0
  * @authors Anton Chernov
  * @date    24/09/2022
+ * @date    25/09/2022
  */
 
 /****************************** Included files ********************************/
 #include "vector.h"
-#include <stdio.h>
+#include "log.h"
 #include <stdlib.h>
 #include <malloc.h>
 #include <assert.h>
 /******************************** Definition **********************************/
-#define warning_print(fmt, ...) {\
-        fprintf(\
-            stdout,\
-            "[WARNING] " fmt " in %s, Line %i\n",\
-            __VA_ARGS__,\
-            __FILE__,\
-            __LINE__\
-        );\
-        fflush(stdout);\
-    }
-/*----------------------------------------------------------------------------*/
-#define error_print(fmt, ...) {\
-        fprintf(\
-            stdout,\
-            "[ERROR] " fmt " in %s, Line %i\n",\
-            __VA_ARGS__,\
-            __FILE__,\
-            __LINE__\
-        );\
-        fflush(stdout);\
-    }
-/*----------------------------------------------------------------------------*/
 #define UNKNOWN_TYPE  (255)
+#define SIZE_uint32_t (4)
+#define SIZE_uint64_t (8)
 /****************************** Private  functions ****************************/
-static uint8_t calc_elem_size(data_type_t *data_type) {
+static uint8_t calc_elem_size(data_type_t const * const data_type) {
     uint8_t result;
     switch (*data_type) {
         case U8:
@@ -97,30 +78,100 @@ static void reallocate(Vector * const self, size_t const * const new_size) {
     if (full_data_size) {
         self->data = realloc(self->data, full_data_size);
         if (!self->data) {
-            warning_print("Failed to allocate space for the vector");
             self->curr_size = 0;
             self->max_size = 0;
+            error_print("Failed to allocate space for the vector");
         }
         else {
             self->max_size = *new_size;
-            size_t pos = calc_elem_size(&self->type) * self->curr_size;
-            fill_data(self, pos, NULL);
-            if (*new_size < self->curr_size) self->curr_size = *new_size;
         }
     }
     else warning_print("Incorrect new size for the vector");
 }
 /*----------------------------------------------------------------------------*/
-static data_value_t get_element(Vector * const self, const size_t pos) {
-
+static data_value_t get_element(Vector const * const self, size_t const * const pos) {
+    size_t index = *pos * calc_elem_size(&self->type);
+    uint8_t * start_point = (uint8_t*)self->data + index;
+    data_value_t result = {.u64 = 0};
+    switch (self->type) {
+        case U8:
+        case S8:
+            result.u8 = *start_point;
+            break;
+        case U16:
+        case S16:
+            result.u16 = (*start_point) | (*(start_point + 1) << 8);
+            break;
+        case U32:
+        case S32:
+        case F32: {
+            uint32_t temp = 0;
+            uint8_t  index = SIZE_uint32_t;
+            while (index--) {
+                temp <<= 8;
+                temp |= (start_point)[index];
+            }
+            result.u32 = temp;
+            break;
+        }
+        case U64:
+        case S64:
+        case F64: {
+            uint64_t temp = 0;
+            uint8_t  index = SIZE_uint64_t;
+            while (index--) {
+                temp <<= 8;
+                temp |= (start_point)[index];
+            }
+            result.u64 = temp;
+            break;
+        }
+        default:
+            warning_print("Incorrect type of the vector");
+    }
+    return result;
 }
 /*----------------------------------------------------------------------------*/
 static void set_element(
     Vector * const self,
-    const size_t pos,
-    const data_value_t value
+    size_t const * const pos,
+    data_value_t const * const value
 ) {
-
+    size_t index = *pos * calc_elem_size(&self->type);
+    uint8_t * start_point = (uint8_t*)self->data + index;
+    switch (self->type) {
+        case U8:
+        case S8:
+            *start_point = value->u8;
+            break;
+        case U16:
+        case S16:
+            *start_point++ = (uint8_t)value->u16;
+            *start_point++ = (uint8_t)(value->u16 >> 8);
+            break;
+        case U32:
+        case S32:
+        case F32: {
+            uint32_t temp = value->u32;
+            for (uint8_t i = 0; i < SIZE_uint32_t; i++) {
+                *start_point++ = temp & 0xFF;
+                temp >>= 8;
+            }
+            break;
+        }
+        case U64:
+        case S64:
+        case F64: {
+            uint64_t temp = value->u64;
+            for (uint8_t i = 0; i < SIZE_uint64_t; i++) {
+                *start_point++ = temp & 0xFF;
+                temp >>= 8;
+            }
+            break;
+        }
+        default:
+            warning_print("Incorrect type of the vector");
+    }
 }
 /********************* Application Programming Interface **********************/
 void Vector_ctor(
@@ -136,7 +187,6 @@ void Vector_ctor(
         self->curr_size = 0;
         self->max_size = 0;
         error_print("Failed to allocate space for the vector");
-        assert(0);
     }
     else {
         self->max_size = data_size;
@@ -163,6 +213,13 @@ void Vector_dctor(Vector * const self) {
 void reserve(Vector * const self, const size_t new_size) {
     assert(self->data);
     reallocate(self, &new_size);
+    if (new_size < self->curr_size) {
+        self->curr_size = new_size;
+    }
+    else if (new_size > self->curr_size) {
+        size_t pos = calc_elem_size(&self->type) * self->curr_size;
+        fill_data(self, pos, NULL);
+    }
 }
 /*----------------------------------------------------------------------------*/
 void resize(Vector * const self, const size_t new_size) {
@@ -171,12 +228,9 @@ void resize(Vector * const self, const size_t new_size) {
     pos *= calc_elem_size(&self->type);
     if (new_size > self->max_size) {
         reallocate(self, &new_size);
-        self->curr_size = new_size;
     }
-    else {
-        fill_data(self, pos, NULL);
-        self->curr_size = new_size;
-    }
+    fill_data(self, pos, NULL);
+    self->curr_size = new_size;
 }
 /*----------------------------------------------------------------------------*/
 void clear(Vector * const self) {
@@ -187,16 +241,23 @@ void clear(Vector * const self) {
 /*----------------------------------------------------------------------------*/
 void push_back(Vector * const self, data_value_t value) {
     assert(self->data);
-    if (self->curr_size < self->max_size) {
-        
+    if (!(self->curr_size < self->max_size)) {
+        size_t new_size = self->max_size + 1;
+        reallocate(self, &new_size);
     }
-    else {
-
-    }
+    set_element(self, &self->curr_size, &value);
+    self->curr_size++;
 }
 /*----------------------------------------------------------------------------*/
 void set_at(Vector * const self, const size_t pos, data_value_t value) {
     assert(self->data);
+    if (self->curr_size) {
+        if (!(pos + 1 > self->curr_size)) {
+            set_element(self, &pos, &value);
+        }
+        else warning_print("The specified position is out of range");
+    }
+    else warning_print("The vector is empty");
 }
 /*----------------------------------------------------------------------------*/
 size_t size(Vector const * const self) {
@@ -211,13 +272,27 @@ size_t capacity(Vector const * const self) {
 /*----------------------------------------------------------------------------*/
 data_value_t pop_back(Vector * const self) {
     assert(self->data);
-    data_value_t result = {.u8 = 0};
+    data_value_t result = {.u64 = 0};
+    if (self->curr_size) {
+        --self->curr_size;
+        result = get_element(self, &self->curr_size);
+    }
+    else {
+        warning_print("The vector is empty");
+    }
     return result;
 }
 /*----------------------------------------------------------------------------*/
 data_value_t get_at(Vector const * const self, const size_t pos) {
     assert(self->data);
-    data_value_t result = { .u8 = 0 };
+    data_value_t result = { .u64 = 0 };
+    if (self->curr_size) {
+        if (!(pos + 1 > self->curr_size)) {
+            result = get_element(self, &pos);
+        }
+        else warning_print("The specified position is out of range");
+    }
+    else warning_print("The vector is empty");
     return result;
 }
 /*----------------------------------------------------------------------------*/
