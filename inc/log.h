@@ -7,9 +7,10 @@
 
 #ifndef LOG_H
 #define LOG_H
-
+/****************************** Included files ********************************/
 #include <stdio.h>
-
+#include <assert.h>
+/******************************** Definition **********************************/
 #define warning_print(fmt, ...) {\
         fprintf(\
             stdout,\
@@ -32,4 +33,5 @@
         fflush(stdout);\
         assert(0);\
     }
+/******************************************************************************/
 #endif

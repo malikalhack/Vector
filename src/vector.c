@@ -11,7 +11,6 @@
 #include "log.h"
 #include <stdlib.h>
 #include <malloc.h>
-#include <assert.h>
 /******************************** Definition **********************************/
 #define UNKNOWN_TYPE  (255)
 #define SIZE_uint32_t (4)
@@ -89,7 +88,10 @@ static void reallocate(Vector * const self, size_t const * const new_size) {
     else warning_print("Incorrect new size for the vector");
 }
 /*----------------------------------------------------------------------------*/
-static data_value_t get_element(Vector const * const self, size_t const * const pos) {
+static data_value_t get_element(
+    Vector const * const self,
+    size_t const * const pos
+) {
     size_t index = *pos * calc_elem_size(&self->type);
     uint8_t * start_point = (uint8_t*)self->data + index;
     data_value_t result = {.u64 = 0};
@@ -171,6 +173,23 @@ static void set_element(
         }
         default:
             warning_print("Incorrect type of the vector");
+    }
+}
+/*----------------------------------------------------------------------------*/
+static void make_room(
+    Vector * const self,
+    size_t const * const pos,
+    size_t const * const num
+) {
+    if (self->curr_size) {
+        data_value_t temp;
+        size_t dst_index = self->curr_size + *num - 1u;
+        while (*pos < dst_index) {
+            size_t src_index = dst_index - *num;
+            temp = get_element(self, &src_index);
+            set_element(self, &dst_index, &temp);
+            dst_index--;
+        }
     }
 }
 /********************* Application Programming Interface **********************/
@@ -298,6 +317,17 @@ data_value_t get_at(Vector const * const self, const size_t pos) {
 /*----------------------------------------------------------------------------*/
 void insert(Vector * const self, const size_t pos, data_value_t value) {
     assert(self->data);
+    const size_t room = 1u;
+    if (!(self->curr_size < self->max_size)) {
+        size_t new_size = self->max_size + room;
+        reallocate(self, &new_size);
+    }
+    if (!(pos > self->curr_size)) {
+        make_room(self, &pos, &room);
+        set_element(self, &pos, &value);
+        self->curr_size++;
+    }
+    else warning_print("The specified position is out of range");
 }
 /*----------------------------------------------------------------------------*/
 void insert_array(
@@ -307,6 +337,28 @@ void insert_array(
     const size_t data_size
 ) {
     assert(self->data);
+    if (new_data && data_size) {
+        if (!(self->curr_size + data_size <= self->max_size)) {
+            size_t new_size = 
+                self->max_size + (self->curr_size + data_size - self->max_size);
+            reallocate(self, &new_size);
+        }
+        if (!(pos > self->curr_size)) {
+            uint8_t * vector_data_ = (uint8_t*)self->data;
+            uint8_t * input_data_ = (uint8_t*)new_data;
+            const size_t start_pos = pos * calc_elem_size(&self->type);
+            const size_t finish_pos =
+                start_pos + calc_full_data_size(&(self->type), &data_size);
+
+            make_room(self, &pos, &data_size);
+            for (size_t i = start_pos, j = 0; i < finish_pos; i++, j++) {
+                *(vector_data_ + i) = *(input_data_ + j);
+            }
+            self->curr_size += data_size;
+        }
+        else warning_print("The specified position is out of range");
+    }
+    else warning_print("Array is empty");
 }
 /*----------------------------------------------------------------------------*/
 void insert_group(
@@ -316,6 +368,25 @@ void insert_group(
     data_value_t value
 ) {
     assert(self->data);
+    if (finish_pos < start_pos) {
+        warning_print("The start and end positions are incorrect");
+    }
+    else {
+        const size_t room = finish_pos - start_pos + 1u;
+        if (!(self->curr_size + room <= self->max_size)) {
+            size_t new_size =
+                self->max_size + (self->curr_size + room - self->max_size);
+            reallocate(self, &new_size);
+        }
+        if (!(start_pos > self->curr_size)) {
+            make_room(self, &start_pos, &room);
+            for (size_t i = start_pos; i <= finish_pos; i++) {
+                set_element(self, &i, &value);
+            }
+            self->curr_size += room;
+        }
+        else warning_print("The specified position is out of range");
+    }
 }
 /*----------------------------------------------------------------------------*/
 void erase(Vector * const self, const size_t pos) {

@@ -101,17 +101,17 @@ int main (void) {
     float v_data[] = { 1.0f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 10.5f };
     data_value_t el;
 
-    printf("Create vector\n");
+    printf("Create a vector\n");
     Vector_ctor(&vector, F32, sizeof(v_data)/sizeof(v_data[0]), (void*)v_data);
     printf("The vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
-    printf("Reserve new capacity for vector\n");
+    printf("Reserve new capacity for the vector\n");
     reserve(&vector, 12);
     printf("The vector size: %3u, new vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
-    printf("Resize vector\n");
+    printf("Resize the vector\n");
     resize(&vector, 12);
     printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
@@ -121,18 +121,18 @@ int main (void) {
     printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
-    printf("Push back value into the vector\n");
+    printf("Push back a value into the vector\n");
     el.f32 = 98.7654f;
     push_back(&vector, el);
     printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
-    printf("Resize vector one more time\n");
+    printf("Resize the vector one more time\n");
     resize(&vector, 14);
     printf("New vector size: %3u, new vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
-    printf("Push back value into the vector\n");
+    printf("Push back a value into the vector\n");
     el.f32 = 65.4321f;
     push_back(&vector, el);
     printf("New vector size: %3u, new vector capacity: %3u\n", size(&vector), capacity(&vector));
@@ -156,9 +156,44 @@ int main (void) {
     printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
-    printf("Clear vector\n");
+    printf("Clear the vector\n");
     clear(&vector);
-    printf("New vector size: %3u, new vector capacity: %3u\n", size(&vector), capacity(&vector));
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Insert one element into the vector\n");
+    el.f32 = 1.23456f;
+    insert(&vector, 0, el);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Insert another element into the vector\n");
+    el.f32 = 2.222222f;
+    insert(&vector, 0, el);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Insert one more element into the vector\n");
+    el.f32 = 3.33333f;
+    insert(&vector, 0, el);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Insert one more element into the vector\n");
+    el.f32 = 4.44444f;
+    insert(&vector, 1, el);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Insert group of elements into the vector\n");
+    el.f32 = 7.89123f;
+    insert_group(&vector, 0, 5, el);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Insert array of elements into the vector\n");
+    insert_array(&vector, 3, (void*)v_data, 5);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
     Vector_dctor(&vector);
