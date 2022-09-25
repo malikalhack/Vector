@@ -192,6 +192,33 @@ static void make_room(
         }
     }
 }
+/*----------------------------------------------------------------------------*/
+static void squash(
+    Vector * const self,
+    size_t const * const pos,
+    size_t const * const num
+) {
+    if (self->curr_size) {
+        if (*pos < self->curr_size) {
+            if ((*pos + *num) < self->curr_size) {
+                data_value_t temp;
+                size_t src_index = *pos + *num;
+                while (src_index < self->curr_size) {
+                    size_t dst_index = src_index - *num;
+                    temp = get_element(self, &src_index);
+                    set_element(self, &dst_index, &temp);
+                    src_index++;
+                }
+                self->curr_size -= *num;
+            }
+            else {
+                self->curr_size = *pos;
+            }
+        }
+        else warning_print("The specified position is out of range");
+    }
+    else warning_print("The vector is empty");
+}
 /********************* Application Programming Interface **********************/
 void Vector_ctor(
     Vector * const self,
@@ -390,7 +417,9 @@ void insert_group(
 }
 /*----------------------------------------------------------------------------*/
 void erase(Vector * const self, const size_t pos) {
-
+    assert(self->data);
+    const size_t num = 1u;
+    squash(self,&pos, &num);
 }
 /*----------------------------------------------------------------------------*/
 void erase_group(
@@ -399,5 +428,12 @@ void erase_group(
     const size_t finish_pos
 ) {
     assert(self->data);
+    if (finish_pos < start_pos) {
+        warning_print("The start and end positions are incorrect");
+    }
+    else {
+        const size_t num = finish_pos - start_pos + 1u;
+        squash(self, &start_pos, &num);
+    }
 }
 /******************************************************************************/

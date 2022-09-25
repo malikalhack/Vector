@@ -196,6 +196,21 @@ int main (void) {
     printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
     vector_print(&vector);
 
+    printf("Erase one elements from the vector\n");
+    erase(&vector, 0);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Erase one more elements from the vector\n");
+    erase(&vector, 13);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
+    printf("Erase group of elements from the vector\n");
+    erase_group(&vector, 3, 7);
+    printf("New vector size: %3u, the vector capacity: %3u\n", size(&vector), capacity(&vector));
+    vector_print(&vector);
+
     Vector_dctor(&vector);
     getchar();
     return 0;
